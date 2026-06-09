@@ -1,4 +1,5 @@
 import React from 'react';
+import { parseWhatsAppChat, getUserWithMostMessages } from '../utils/parser';
 
 export const UploadSection = () => {
 
@@ -10,11 +11,23 @@ export const UploadSection = () => {
     
     reader.onload = (e) => {
       const text = e.target.result;
-      console.log("¡Archivo cargado con éxito!");
-      console.log("-----------------------------------------");
-      
-      console.log(text.substring(0, 500)); 
-      console.log("-----------------------------------------");
+
+      // 1. Parsear
+      const parsedData = parseWhatsAppChat(text);
+      console.log("✅ Total de mensajes válidos:", parsedData.length);
+
+      // 2. Calcular Métrica: Usuario top
+      const topUser = getUserWithMostMessages(parsedData);
+
+      console.log("✅ ¡Archivo procesado con éxito!");
+      console.log("Total de mensajes válidos:", parsedData.length);
+      console.table(parsedData.slice(0, 20)); // Mostramos los primeros 5 en formato tabla
+      if(topUser) {
+          console.log(`🏆 El usuario que más mensajes mandó fue: ${topUser.author} con ${topUser.count} mensajes.`);
+      } else {
+          console.log("No se pudo determinar el usuario (archivo vacío o sin formato).");
+      }
+
     };
 
     
