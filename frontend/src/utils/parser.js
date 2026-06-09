@@ -81,3 +81,26 @@ export const getBusiestHour = (messages) => {
 
   return { hour: topHour, messages: maxMessages };
 };
+export const getBusiestDay = (messages) => {
+  if (!messages || messages.length === 0) return null;
+
+  const dayCounts = {};
+
+  messages.forEach((msg) => {
+    // Usamos la fecha completa (ej: "14/04/2026")
+    const date = msg.date;
+    dayCounts[date] = (dayCounts[date] || 0) + 1;
+  });
+
+  let topDate = null;
+  let maxMessages = 0;
+
+  for (const [date, count] of Object.entries(dayCounts)) {
+    if (count > maxMessages) {
+      maxMessages = count;
+      topDate = date;
+    }
+  }
+
+  return { date: topDate, messages: maxMessages };
+};

@@ -3,6 +3,7 @@ import {
   parseWhatsAppChat,
   getUserWithMostMessages,
   getBusiestHour,
+  getBusiestDay,
 } from "../utils/parser";
 
 export const UploadSection = () => {
@@ -14,6 +15,7 @@ export const UploadSection = () => {
 
     reader.onload = (e) => {
       const text = e.target.result;
+      const busiestDay = getBusiestDay(parsedData);
 
       // 1. Parsear
       const parsedData = parseWhatsAppChat(text);
@@ -37,6 +39,11 @@ export const UploadSection = () => {
       } else {
         console.log(
           "No se pudo determinar el usuario (archivo vacío o sin formato).",
+        );
+      }
+      if (busiestDay) {
+        console.log(
+          `📅 El día de más charla fue el: ${busiestDay.date} con ${busiestDay.messages} mensajes.`,
         );
       }
     };
