@@ -1,20 +1,21 @@
 // frontend/src/utils/parser.js
 
 export const parseWhatsAppChat = (text) => {
-  const lines = text.split('\n');
+  const lines = text.split("\n");
   const messages = [];
 
   // Regex básico (se puede mejorar después para soportar mensajes multilínea)
-  const regex = /^(\d{1,2}\/\d{1,2}\/\d{2,4}),\s(\d{1,2}:\d{2})\s-\s(.*?):\s(.*)$/;
+  const regex =
+    /^(\d{1,2}\/\d{1,2}\/\d{2,4}),\s(\d{1,2}:\d{2})\s-\s(.*?):\s(.*)$/;
 
-  lines.forEach(line => {
+  lines.forEach((line) => {
     const match = line.match(regex);
     if (match) {
       messages.push({
         date: match[1],
         time: match[2],
         author: match[3],
-        text: match[4]
+        text: match[4],
       });
     }
   });
@@ -22,17 +23,16 @@ export const parseWhatsAppChat = (text) => {
   return messages;
 };
 
-
 export const getUserWithMostMessages = (messages) => {
   if (!messages || messages.length === 0) return null;
 
   const userCounts = {};
 
   // 1. Contamos los mensajes por cada autor
-  messages.forEach(msg => {
-    const author = msg.author.trim().toLowerCase(); 
-    
-    if(author.length > 30) return; 
+  messages.forEach((msg) => {
+    const author = msg.author.trim().toLowerCase();
+
+    if (author.length > 30) return;
 
     if (userCounts[author]) {
       userCounts[author]++;
@@ -53,4 +53,31 @@ export const getUserWithMostMessages = (messages) => {
   }
 
   return { author: topUser, count: maxMessages };
+};
+
+export const getBusiestHour = (messages) => {
+  if (!messages || messages.length === 0) return null;
+
+  const hourCounts = {};
+
+  messages.forEach((msg) => {
+    // La hora viene como "14:30" o "9:15", la separamos por los ":" y nos quedamos con la primera parte.
+    const hour = msg.time.split(":")[0];
+    const formattedHour = `${hour}h`; // Le agregamos la 'h' para el JSON del front (ej: "14h")
+
+    // Sumamos 1 al contador de esa hora
+    hourCounts[formattedHour] = (hourCounts[formattedHour] || 0) + 1;
+  });
+
+  let topHour = null;
+  let maxMessages = 0;
+
+  for (const [hour, count] of Object.entries(hourCounts)) {
+    if (count > maxMessages) {
+      maxMessages = count;
+      topHour = hour;
+    }
+  }
+
+  return { hour: topHour, messages: maxMessages };
 };
