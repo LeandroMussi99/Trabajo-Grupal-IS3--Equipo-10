@@ -1,15 +1,26 @@
 // frontend/src/utils/parser.js
 
 export const parseWhatsAppChat = (text) => {
-  const lines = text.split("\n");
+  const lines = text.split(/\r?\n/);
   const messages = [];
 
-  // Regex básico (se puede mejorar después para soportar mensajes multilínea)
-  const regex =
-    /^(\d{1,2}\/\d{1,2}\/\d{2,4}),\s(\d{1,2}:\d{2})\s-\s(.*?):\s(.*)$/;
+  // Android:
+  const regexAndroid =
+    /^(\d{1,2}\/\d{1,2}\/\d{2,4}),\s(\d{1,2}:\d{2})\s-\s(.+?):\s(.+)$/;
+
+  // iOS:
+  const regexIOS =
+    /^\[(\d{1,2}\/\d{1,2}\/\d{2,4}),\s(\d{1,2}:\d{2}):\d{2}\]\s(.+?):\s(.+)$/;
+
+  // Mensaje de sistema Android (sin autor, se ignora)
+  const regexSystem =
+    /^(\d{1,2}\/\d{1,2}\/\d{2,4}),\s(\d{1,2}:\d{2})\s-\s[^:]+$/;
 
   lines.forEach((line) => {
-    const match = line.match(regex);
+    if (line.match(regexSystem)) return;
+
+    const match = line.match(regexAndroid) || line.match(regexIOS);
+
     if (match) {
       messages.push({
         date: match[1],
@@ -17,6 +28,10 @@ export const parseWhatsAppChat = (text) => {
         author: match[3],
         text: match[4],
       });
+    } else {
+      if (line.trim().length > 0) {
+        console.log("NO MATCH:", JSON.stringify(line.substring(0, 80)));
+      }
     }
   });
 
@@ -109,16 +124,16 @@ export const getMostUsedEmoji = (messages) => {
   if (!messages || messages.length === 0) return null;
 
   const emojiCounts = {};
-  
+
   // Regex moderna para detectar cualquier tipo de emoji (soporta banderas, caras, objetos, etc.)
   const emojiRegex = /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu;
 
-  messages.forEach(msg => {
+  messages.forEach((msg) => {
     // Buscamos todos los emojis dentro del texto del mensaje
     const emojis = msg.text.match(emojiRegex);
-    
+
     if (emojis) {
-      emojis.forEach(emoji => {
+      emojis.forEach((emoji) => {
         emojiCounts[emoji] = (emojiCounts[emoji] || 0) + 1;
       });
     }
