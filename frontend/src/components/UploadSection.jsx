@@ -1,74 +1,66 @@
-import React from "react";
-import {
-  parseWhatsAppChat,
-  getUserWithMostMessages,
-  getBusiestHour,
-  getBusiestDay,
-} from "../utils/parser";
+import React, { useState } from 'react';
+import { parseWhatsAppChat, getUserWithMostMessages, getBusiestHour, getBusiestDay } from '../utils/parser';
 
 export const UploadSection = () => {
+  // Inicializamos el estado en null para saber cuándo mostrar el dashboard
+  const [metrics, setMetrics] = useState(null);
+
   const handleFileUpload = (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
+    const file = event.target.files[0]; 
+    if (!file) return; 
 
     const reader = new FileReader();
-
+    
     reader.onload = (e) => {
       const text = e.target.result;
-      const busiestDay = getBusiestDay(parsedData);
-
-      // 1. Parsear
+      
+      // Ejecutamos todas nuestras funciones
       const parsedData = parseWhatsAppChat(text);
-      console.log("✅ Total de mensajes válidos:", parsedData.length);
-
-      // 2. Calcular Métrica: Usuario top
       const topUser = getUserWithMostMessages(parsedData);
       const busiestHour = getBusiestHour(parsedData);
-      console.log("✅ ¡Archivo procesado con éxito!");
-      console.log("Total de mensajes válidos:", parsedData.length);
-      console.table(parsedData.slice(0, 20)); // Mostramos los primeros 5 en formato tabla
-      if (busiestHour) {
-        console.log(
-          `⏰ La hora más picante fue a las: ${busiestHour.hour} con ${busiestHour.messages} mensajes.`,
-        );
-      }
-      if (topUser) {
-        console.log(
-          `🏆 El usuario que más mensajes mandó fue: ${topUser.author} con ${topUser.count} mensajes.`,
-        );
-      } else {
-        console.log(
-          "No se pudo determinar el usuario (archivo vacío o sin formato).",
-        );
-      }
-      if (busiestDay) {
-        console.log(
-          `📅 El día de más charla fue el: ${busiestDay.date} con ${busiestDay.messages} mensajes.`,
-        );
-      }
-    };
+      const busiestDay = getBusiestDay(parsedData);
 
+      // Guardamos todo en el estado de React
+      setMetrics({
+        total: parsedData.length,
+        topUser,
+        busiestHour,
+        busiestDay
+      });
+    };
+    
     reader.readAsText(file);
   };
 
   return (
     <div className="upload-container">
       <h2>Analizá tu chat de WhatsApp</h2>
-      <p>
-        Exportá tu chat en formato .txt y subilo acá para ver las estadísticas.
-      </p>
-
+      <p>Exportá tu chat en formato .txt y subilo acá para ver las estadísticas.</p>
+      
       <div className="upload-box">
-        <input
-          type="file"
-          id="chat-file"
-          accept=".txt"
-          onChange={handleFileUpload}
+        <input 
+          type="file" 
+          id="chat-file" 
+          accept=".txt" 
+          onChange={handleFileUpload} 
         />
         <label htmlFor="chat-file" className="upload-btn">
           Seleccionar archivo .txt
         </label>
       </div>
+
+      {/* Renderizado Condicional: Solo se muestra si hay métricas calculadas */}
+      {metrics && (
+        <div className="dashboard-results">
+          <h3>Resultados del Análisis</h3>
+          <ul>
+            <li><strong>Total de mensajes procesados:</strong> {metrics.total}</li>
+            <li><strong>Usuario Top:</strong> {metrics.topUser?.author} ({metrics.topUser?.count} msjs)</li>
+            <li><strong>Día más activo:</strong> {metrics.busiestDay?.date} ({metrics.busiestDay?.messages} msjs)</li>
+            <li><strong>Hora pico:</strong> {metrics.busiestHour?.hour} ({metrics.busiestHour?.messages} msjs)</li>
+          </ul>
+        </div>
+      )}
     </div>
   );
 };
