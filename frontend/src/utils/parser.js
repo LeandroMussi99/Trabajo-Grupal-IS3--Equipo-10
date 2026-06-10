@@ -104,3 +104,35 @@ export const getBusiestDay = (messages) => {
 
   return { date: topDate, messages: maxMessages };
 };
+
+export const getMostUsedEmoji = (messages) => {
+  if (!messages || messages.length === 0) return null;
+
+  const emojiCounts = {};
+  
+  // Regex moderna para detectar cualquier tipo de emoji (soporta banderas, caras, objetos, etc.)
+  const emojiRegex = /[\p{Emoji_Presentation}\p{Extended_Pictographic}]/gu;
+
+  messages.forEach(msg => {
+    // Buscamos todos los emojis dentro del texto del mensaje
+    const emojis = msg.text.match(emojiRegex);
+    
+    if (emojis) {
+      emojis.forEach(emoji => {
+        emojiCounts[emoji] = (emojiCounts[emoji] || 0) + 1;
+      });
+    }
+  });
+
+  let topEmoji = null;
+  let maxCount = 0;
+
+  for (const [emoji, count] of Object.entries(emojiCounts)) {
+    if (count > maxCount) {
+      maxCount = count;
+      topEmoji = emoji;
+    }
+  }
+
+  return { emoji: topEmoji, count: maxCount };
+};

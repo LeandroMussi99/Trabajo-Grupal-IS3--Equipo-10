@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { parseWhatsAppChat, getUserWithMostMessages, getBusiestHour, getBusiestDay } from '../utils/parser';
+import { parseWhatsAppChat, getUserWithMostMessages, getBusiestHour, getBusiestDay, getMostUsedEmoji } from '../utils/parser';
 
 export const UploadSection = () => {
   // Inicializamos el estado en null para saber cuándo mostrar el dashboard
@@ -19,13 +19,15 @@ export const UploadSection = () => {
       const topUser = getUserWithMostMessages(parsedData);
       const busiestHour = getBusiestHour(parsedData);
       const busiestDay = getBusiestDay(parsedData);
+      const mostUsedEmoji = getMostUsedEmoji(parsedData);
 
       // Guardamos todo en el estado de React
       setMetrics({
         total: parsedData.length,
         topUser,
         busiestHour,
-        busiestDay
+        busiestDay,
+        mostUsedEmoji
       });
     };
     
@@ -58,6 +60,9 @@ export const UploadSection = () => {
             <li><strong>Usuario Top:</strong> {metrics.topUser?.author} ({metrics.topUser?.count} msjs)</li>
             <li><strong>Día más activo:</strong> {metrics.busiestDay?.date} ({metrics.busiestDay?.messages} msjs)</li>
             <li><strong>Hora pico:</strong> {metrics.busiestHour?.hour} ({metrics.busiestHour?.messages} msjs)</li>
+            {metrics.mostUsedEmoji && (
+              <li><strong>Emoji favorito:</strong> {metrics.mostUsedEmoji.emoji} (usado {metrics.mostUsedEmoji.count} veces)</li>
+            )}
           </ul>
         </div>
       )}
