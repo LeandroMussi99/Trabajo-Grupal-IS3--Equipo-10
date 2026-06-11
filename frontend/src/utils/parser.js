@@ -157,15 +157,90 @@ export const getHourlyActivityData = (messages) => {
 
   const hourCounts = {};
 
-  messages.forEach(msg => {
-    const hour = msg.time.split(':')[0];
+  messages.forEach((msg) => {
+    const hour = msg.time.split(":")[0];
     const formattedHour = `${hour}h`;
     hourCounts[formattedHour] = (hourCounts[formattedHour] || 0) + 1;
   });
 
   // Transformamos el objeto en un array para que Recharts lo entienda y lo ordenamos por hora
-  return Object.keys(hourCounts).map(key => ({
-    hora: key,
-    mensajes: hourCounts[key]
-  })).sort((a, b) => parseInt(a.hora) - parseInt(b.hora));
+  return Object.keys(hourCounts)
+    .map((key) => ({
+      hora: key,
+      mensajes: hourCounts[key],
+    }))
+    .sort((a, b) => parseInt(a.hora) - parseInt(b.hora));
+};
+export const getMostUsedWords = (messages) => {
+  if (!messages || messages.length === 0) return [];
+
+  const wordCounts = {};
+
+  // Lista de palabras que NO queremos contar (artículos, preposiciones, risas típicas)
+  const stopWords = new Set([
+    "de",
+    "la",
+    "que",
+    "el",
+    "en",
+    "y",
+    "a",
+    "los",
+    "se",
+    "del",
+    "las",
+    "un",
+    "por",
+    "con",
+    "no",
+    "una",
+    "su",
+    "para",
+    "es",
+    "al",
+    "lo",
+    "como",
+    "más",
+    "o",
+    "pero",
+    "sus",
+    "le",
+    "ya",
+    "si",
+    "te",
+    "me",
+    "mi",
+    "eso",
+    "sí",
+    "qué",
+    "q",
+    "xq",
+    "jaja",
+    "jajaja",
+    "jajaj",
+    "jajajaja",
+    "multimedia",
+    "omitido", // "multimedia omitido" es clásico de WhatsApp
+  ]);
+
+  messages.forEach((msg) => {
+    // Pasamos todo a minúsculas y sacamos comas, puntos y símbolos raros
+    const cleanText = msg.text
+      .toLowerCase()
+      .replace(/[.,/#!$%^&*;:{}=\-_`~()?"¿¡]/g, "");
+    const words = cleanText.split(/\s+/);
+
+    words.forEach((word) => {
+      // Solo contamos si tiene más de 2 letras y no está en nuestra lista negra
+      if (word.length > 2 && !stopWords.has(word)) {
+        wordCounts[word] = (wordCounts[word] || 0) + 1;
+      }
+    });
+  });
+
+  // Convertimos el objeto a un array, lo ordenamos de mayor a menor y nos quedamos con las 30 principales
+  return Object.keys(wordCounts)
+    .map((key) => ({ text: key, value: wordCounts[key] }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 30);
 };
