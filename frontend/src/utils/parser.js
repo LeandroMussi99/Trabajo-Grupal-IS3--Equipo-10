@@ -151,3 +151,21 @@ export const getMostUsedEmoji = (messages) => {
 
   return { emoji: topEmoji, count: maxCount };
 };
+
+export const getHourlyActivityData = (messages) => {
+  if (!messages || messages.length === 0) return [];
+
+  const hourCounts = {};
+
+  messages.forEach(msg => {
+    const hour = msg.time.split(':')[0];
+    const formattedHour = `${hour}h`;
+    hourCounts[formattedHour] = (hourCounts[formattedHour] || 0) + 1;
+  });
+
+  // Transformamos el objeto en un array para que Recharts lo entienda y lo ordenamos por hora
+  return Object.keys(hourCounts).map(key => ({
+    hora: key,
+    mensajes: hourCounts[key]
+  })).sort((a, b) => parseInt(a.hora) - parseInt(b.hora));
+};

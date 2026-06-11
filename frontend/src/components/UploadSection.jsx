@@ -1,5 +1,9 @@
 import React, { useState } from 'react';
-import { parseWhatsAppChat, getUserWithMostMessages, getBusiestHour, getBusiestDay, getMostUsedEmoji } from '../utils/parser';
+import { Bar } from 'react-chartjs-2';
+import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from 'chart.js';
+import { parseWhatsAppChat, getUserWithMostMessages, getBusiestHour, getBusiestDay, getMostUsedEmoji, getHourlyActivityData } from '../utils/parser';
+
+ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 export const UploadSection = () => {
   // Inicializamos el estado en null para saber cuándo mostrar el dashboard
@@ -20,6 +24,7 @@ export const UploadSection = () => {
       const busiestHour = getBusiestHour(parsedData);
       const busiestDay = getBusiestDay(parsedData);
       const mostUsedEmoji = getMostUsedEmoji(parsedData);
+      const hourlyData = getHourlyActivityData(parsedData);
 
       // Guardamos todo en el estado de React
       setMetrics({
@@ -27,11 +32,34 @@ export const UploadSection = () => {
         topUser,
         busiestHour,
         busiestDay,
-        mostUsedEmoji
+        mostUsedEmoji,
+        hourlyData
       });
     };
     
     reader.readAsText(file);
+  };
+
+  // Preparamos los datos para Chart.js SOLO si metrics y hourlyData existen
+  const chartData = metrics?.hourlyData ? {
+    labels: metrics.hourlyData.map(d => d.hora),
+    datasets: [
+      {
+        label: 'Cantidad de mensajes',
+        data: metrics.hourlyData.map(d => d.mensajes),
+        backgroundColor: '#25D366', // Verde WhatsApp
+        borderRadius: 4,
+      }
+    ]
+  } : null;
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      title: { display: true, text: 'Actividad por Hora' }
+    }
   };
 
   return (
@@ -64,6 +92,9 @@ export const UploadSection = () => {
               <li><strong>Emoji favorito:</strong> {metrics.mostUsedEmoji.emoji} (usado {metrics.mostUsedEmoji.count} veces)</li>
             )}
           </ul>
+          <div className="chart-container" style={{ width: '100%', height: '300px', marginTop: '30px' }}>
+             <Bar data={chartData} options={chartOptions} />
+          </div>
         </div>
       )}
     </div>
