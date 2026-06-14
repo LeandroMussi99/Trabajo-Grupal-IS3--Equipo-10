@@ -26,8 +26,6 @@ export const UploadSection = () => {
     reader.onload = (e) => {
       const text = e.target.result;
       const parsedData = parseWhatsAppChat(text);
-
-      // --- LÓGICA DE NUEVAS MÉTRICAS ---
       const authorsSet = new Set();
       const daysMap = {};
       
@@ -185,9 +183,6 @@ export const UploadSection = () => {
           <h2>WhatsAnalyze</h2>
         </div>
 
-        {/* El menú de navegación fue eliminado para evitar botones sin uso */}
-        
-        {/* Usamos margin-top: auto en este div para que siempre quede pegado al fondo del sidebar */}
         <div className="sidebar-bottom" style={{ marginTop: 'auto' }}>
           <div className="file-info-box">
             <p className="file-title">Chat cargado</p>
@@ -208,7 +203,6 @@ export const UploadSection = () => {
             <h1>Resumen general</h1>
             <p>Estadísticas generales de tu chat</p>
           </div>
-          {/* Este botón ahora reinicia el panel */}
           <button className="btn-primary" onClick={resetDashboard}>Limpiar panel</button>
         </header>
 
