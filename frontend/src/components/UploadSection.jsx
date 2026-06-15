@@ -310,7 +310,7 @@ export const UploadSection = () => {
             <h3>Nube de palabras</h3>
             <div className="word-cloud">
               {arrangedWords.map((word, index) => {
-                  const fontSize = 14 + ((word.value / maxWordCount) * 34); 
+                  const fontSize = Math.max(14, Math.min(45, 14 + ((word.value / maxWordCount) * 31)));
                   return (
                     <span key={index} style={{ 
                       fontSize: `${fontSize}px`, 
