@@ -1,36 +1,47 @@
 // frontend/src/utils/parser.js
 
 export const parseWhatsAppChat = (text) => {
-  const lines = text.split(/\r?\n/);
+  // Limpiamos caracteres invisibles y preparamos el corte por fecha
+  const cleanText = text.replace(/\u200E/g, "").replace(/\r\n/g, "\n");
+  const rawMessages = cleanText.split(
+    /\n(?=\[?\d{1,2}\/\d{1,2}\/\d{2,4},?\s\d{1,2}:\d{2})/,
+  );
+
   const messages = [];
 
-  // Android:
+  // Android (modificado para soportar multilínea con [\s\S]+)
   const regexAndroid =
-    /^(\d{1,2}\/\d{1,2}\/\d{2,4}),\s(\d{1,2}:\d{2})\s-\s(.+?):\s(.+)$/;
+    /^(\d{1,2}\/\d{1,2}\/\d{2,4}),\s(\d{1,2}:\d{2})\s-\s(.+?):\s([\s\S]+)$/;
 
-  // iOS:
+  // iOS (modificado para soportar multilínea con [\s\S]+)
   const regexIOS =
-    /^\[(\d{1,2}\/\d{1,2}\/\d{2,4}),\s(\d{1,2}:\d{2}):\d{2}\]\s(.+?):\s(.+)$/;
+    /^\[(\d{1,2}\/\d{1,2}\/\d{2,4}),\s(\d{1,2}:\d{2})(?::\d{2})?\]\s(.+?):\s([\s\S]+)$/;
 
-  // Mensaje de sistema Android (sin autor, se ignora)
-  const regexSystem =
-    /^(\d{1,2}\/\d{1,2}\/\d{2,4}),\s(\d{1,2}:\d{2})\s-\s[^:]+$/;
-
-  lines.forEach((line) => {
-    if (line.match(regexSystem)) return;
+  rawMessages.forEach((rawMsg) => {
+    const line = rawMsg.trim();
+    if (!line) return;
 
     const match = line.match(regexAndroid) || line.match(regexIOS);
 
     if (match) {
-      messages.push({
-        date: match[1],
-        time: match[2],
-        author: match[3],
-        text: match[4],
-      });
-    } else {
-      if (line.trim().length > 0) {
-        console.log("NO MATCH:", JSON.stringify(line.substring(0, 80)));
+      const messageText = match[4].trim();
+
+      // Filtramos mensajes de sistema o archivos multimedia omitidos
+      const isSystem =
+        messageText.includes("cifrados de extremo a extremo") ||
+        messageText.includes("cambió tu código de seguridad");
+      const isMedia =
+        /(omitid[oa]|llamada perdida|Video omitido|sticker omitido|imagen omitida|audio omitido)/i.test(
+          messageText,
+        );
+
+      if (!isSystem && !isMedia) {
+        messages.push({
+          date: match[1],
+          time: match[2],
+          author: match[3].trim(),
+          text: messageText,
+        });
       }
     }
   });
@@ -96,6 +107,7 @@ export const getBusiestHour = (messages) => {
 
   return { hour: topHour, messages: maxMessages };
 };
+
 export const getBusiestDay = (messages) => {
   if (!messages || messages.length === 0) return null;
 
@@ -171,12 +183,13 @@ export const getHourlyActivityData = (messages) => {
     }))
     .sort((a, b) => parseInt(a.hora) - parseInt(b.hora));
 };
+
 export const getMostUsedWords = (messages) => {
   if (!messages || messages.length === 0) return [];
 
   const wordCounts = {};
 
-  // Lista de palabras que NO queremos contar (artículos, preposiciones, risas típicas)
+  // Lista de palabras que NO queremos contar (ampliada sin tildes)
   const stopWords = new Set([
     "de",
     "la",
@@ -200,7 +213,7 @@ export const getMostUsedWords = (messages) => {
     "al",
     "lo",
     "como",
-    "más",
+    "mas",
     "o",
     "pero",
     "sus",
@@ -211,8 +224,8 @@ export const getMostUsedWords = (messages) => {
     "me",
     "mi",
     "eso",
-    "sí",
-    "qué",
+    "si",
+    "que",
     "q",
     "xq",
     "jaja",
@@ -220,20 +233,24 @@ export const getMostUsedWords = (messages) => {
     "jajaj",
     "jajajaja",
     "multimedia",
-    "omitido", // "multimedia omitido" es clásico de WhatsApp
+    "omitido",
   ]);
 
   messages.forEach((msg) => {
-    // Pasamos todo a minúsculas y sacamos comas, puntos y símbolos raros
+    // Pasamos a minúsculas, quitamos tildes y dejamos solo letras
     const cleanText = msg.text
       .toLowerCase()
-      .replace(/[.,/#!$%^&*;:{}=\-_`~()?"¿¡]/g, "");
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^\p{L}\s]/gu, "");
+
     const words = cleanText.split(/\s+/);
 
     words.forEach((word) => {
+      const cleanWord = word.trim();
       // Solo contamos si tiene más de 2 letras y no está en nuestra lista negra
-      if (word.length > 2 && !stopWords.has(word)) {
-        wordCounts[word] = (wordCounts[word] || 0) + 1;
+      if (cleanWord.length > 2 && !stopWords.has(cleanWord)) {
+        wordCounts[cleanWord] = (wordCounts[cleanWord] || 0) + 1;
       }
     });
   });
